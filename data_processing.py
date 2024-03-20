@@ -1,6 +1,3 @@
-# data processing provided from notebook
-
-
 import os
 import datetime
 import pyedflib

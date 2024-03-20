@@ -8,4 +8,4 @@ from .data_augment import *
 from .main import *
 from .data_processing import *
 from .utils import *
-from .models import *
+from .model import *
