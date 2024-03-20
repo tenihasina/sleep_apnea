@@ -1,15 +1,19 @@
 # data processing provided from notebook
 
-import pyedflib
+
 import os
+import datetime
+import pyedflib
 import pandas as pd
 import numpy as np
-from tqdm import tqdm
 import matplotlib.pyplot as plt
-import datetime
+
+from tqdm import tqdm
+from sklearn.model_selection import KFold, train_test_split
 
 db_folder = "physionet.org/files/ucddb/1.0.0"
-
+# saves raw data in .npy files located in tmp/
+# returns path to the .npy files
 def process_rawdata():
 
     # this is a file containing the subjects details
@@ -67,7 +71,68 @@ def process_rawdata():
                 offset = onset + int(sample_rate*event["Duration"])
                 raw_respevents[subject_index, onset:offset] = 1
 
+    if not os.path.exists("tmp/"):
+        os.mkdir("tmp/")
+
     np.save("tmp/raw_respevents.npy", raw_respevents)
     np.save("tmp/raw_records.npy", raw_records)
 
-    return ["tmp/raw_respevents.npy", "tmp/raw_records.npy"]
+    return ("tmp/raw_respevents.npy", "tmp/raw_records.npy")
+
+# prepare data into epochs of epoch_duration (seconds) 
+# returns batch of size (708, 7680, 14) as we need a shape divisible by 32
+def make_batch(dataset, sample_rate, epoch_duration):
+    # Calculate the number of samples per epoch
+    samples_per_epoch = sample_rate * epoch_duration
+    samples_per_epoch = 32*math.ceil(samples_per_epoch/32)
+    # Initialize a list to store segmented epochs
+    segmented_epochs = []
+
+    # Iterate over each record in the training set
+    for record in dataset:
+        # Calculate the total number of samples in the record
+        total_samples = record.shape[0]
+
+        # Calculate the number of epochs for this record
+        num_epochs = int(total_samples // samples_per_epoch)
+        # print(num_epochs)
+        # Iterate over each epoch
+        for i in range(num_epochs):
+            # Calculate the start and end indices for this epoch
+            start_index = int(i * samples_per_epoch)
+            end_index = int(start_index + samples_per_epoch)
+            # print(samples_per_epoch)
+            # Extract the epoch from the record
+            epoch = record[start_index:end_index, :]
+
+            # If necessary, pad or truncate the epoch to ensure it has the correct length
+            if epoch.shape[0] < samples_per_epoch:
+                pad_width = ((0, samples_per_epoch - epoch.shape[0]), (0, 0))
+                epoch = np.pad(epoch, pad_width, mode='constant', constant_values=0)
+            elif epoch.shape[0] > samples_per_epoch:
+                epoch = epoch[:samples_per_epoch, :]
+
+            # Append the segmented epoch to the list
+            segmented_epochs.append(epoch)
+
+    # Convert the list of segmented epochs into a numpy array
+    segmented_epochs = np.array(segmented_epochs)
+
+    return segmented_epochs
+
+# raw_records (num_records, signal_len, num_features)
+# in its current form, we get 30% of total records for train,val,test 
+# returns tuple of indexes for train, val and test records (axis = 0 of raw_records)
+def train_test_split_records(records):
+
+    train_ratio = 0.7
+    validation_ratio = 0.15
+    test_ratio = 0.10
+    idx = np.arange(records.shape[0])
+    seed = 42
+
+    train_idx, test_idx = train_test_split(idx, random_state = seed,test_size = 1 - train_ratio)
+    train_idx, test_idx = train_test_split(test_idx, random_state = seed,test_size = test_ratio/(test_ratio + validation_ratio))
+    val_idx, test_idx = train_test_split(test_idx, random_state = seed,test_size = test_ratio/(test_ratio + validation_ratio))
+    
+    return(train_idx, val_idx, test_idx)
