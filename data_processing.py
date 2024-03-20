@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from sklearn.model_selection import KFold, train_test_split
 
+
 db_folder = "physionet.org/files/ucddb/1.0.0"
 # saves raw data in .npy files located in tmp/
 # returns path to the .npy files
@@ -77,7 +78,7 @@ def process_rawdata():
     np.save("tmp/raw_respevents.npy", raw_respevents)
     np.save("tmp/raw_records.npy", raw_records)
 
-    return ("tmp/raw_respevents.npy", "tmp/raw_records.npy")
+    return ("tmp/raw_records.npy", "tmp/raw_respevents.npy")
 
 # prepare data into epochs of epoch_duration (seconds) 
 # returns batch of size (708, 7680, 14) as we need a shape divisible by 32
