@@ -12,10 +12,10 @@ from tqdm import tqdm
 from sklearn.model_selection import KFold, train_test_split
 from utils import *
 
-db_folder = "physionet.org/files/ucddb/1.0.0"
+
 # saves raw data in .npy files located in tmp/
 # returns path to the .npy files
-def process_rawdata():
+def process_rawdata(db_folder):
 
     # this is a file containing the subjects details
     subject_details = pd.read_excel(os.path.join(db_folder, "SubjectDetails.xls"))

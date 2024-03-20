@@ -8,16 +8,17 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 sample_rate = 128
 epoch_duration = 60
+db_folder = "physionet.org/files/ucddb/1.0.0"
 checkpoint_dir = os.path.join("/content/drive/MyDrive/Data/physionet.org/checkpoint_dir", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
 
 
 # create batches of size (708, 7680, 14) for records and (708, 7680, 1) for targets
 # saved in tmp/, might need to del them as you go if too heavy on RAM
 # return tuple of variable size depending on wether you want train, val or test
-def get_batch_from_raw_data(sample_rate, epoch_duration, train, val, test = False):
+def get_batch_from_raw_data(db_folder, sample_rate, epoch_duration, train, val, test = False):
     
     batches = ()
-    path_records, path_events = process_rawdata()
+    path_records, path_events = process_rawdata(db_folder)
     raw_records, raw_respevents = load_raw_data(path_records, path_events)
     train_idx, val_idx, test_idx = train_test_split_records(raw_records)
     if train:
@@ -84,7 +85,7 @@ def fit_best_model(tuner, X_train, Y_train):
 
 # In this script, we make a short example where we re-traini the best model from a previous hyperparameter tuning using randomsearch on a subset
 def main():
-    X_train, Y_train, X_test, Y_test = get_batch_from_raw_data(sample_rate, epoch_duration, train = True, val = False, test = True)
+    X_train, Y_train, X_test, Y_test = get_batch_from_raw_data(db_folder, sample_rate, epoch_duration, train = True, val = False, test = True)
     model = Unet1D(backbone_name = "resnet18_1d", classes = 1, input_shape = (X_train.shape[1], X_train.shape[2]))
     model.compile(
         optimizer = 'adam',
