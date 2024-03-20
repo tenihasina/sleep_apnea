@@ -1,0 +1,3 @@
+pyedflib
+audiomentations
+keras-tuner --install-option='-q -U'
