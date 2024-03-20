@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 from tqdm import tqdm
 from sklearn.model_selection import KFold, train_test_split
-
+from utils import *
 
 db_folder = "physionet.org/files/ucddb/1.0.0"
 # saves raw data in .npy files located in tmp/
@@ -72,11 +72,8 @@ def process_rawdata():
                 offset = onset + int(sample_rate*event["Duration"])
                 raw_respevents[subject_index, onset:offset] = 1
 
-    if not os.path.exists("tmp/"):
-        os.mkdir("tmp/")
-
-    np.save("tmp/raw_respevents.npy", raw_respevents)
-    np.save("tmp/raw_records.npy", raw_records)
+    save_data("tmp/", "raw_respevents.npy", raw_respevents)
+    save_data("tmp/", "raw_records.npy", raw_records)
 
     return ("tmp/raw_records.npy", "tmp/raw_respevents.npy")
 
